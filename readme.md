@@ -49,7 +49,7 @@ and FileName = string
 
 
 let sample = """
-
+---
 :id: 33
 :key: 11345/33
 :filetype: image/png
