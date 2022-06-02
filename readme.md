@@ -11,6 +11,9 @@ I had issues with using FParsec(installing) on a computer with Windows in Deutch
 - Plan in the future to add proper documentation.
 - To add support for "replace" in text.
 
+#### Note to self
+Layered configuration parsing (applying rules that are parsed for multiple config files), even if is out of the scope of a parser - a middle ground can be found.
+
 ## Samples
 
 ```fsharp
