@@ -2,6 +2,7 @@
 
 open Argu
 open Fake.Core
+open Build.Specific
 
 type TargetToken =
     | Clean
@@ -36,18 +37,15 @@ let main argv =
             | PublishNuGet -> "PublishNuGet"
             | FormatCode -> "FormatCode"
         |> fun targetName ->
-            let targetResult =
-                argv
+            argv
                 |> Array.toList
-                |> Target.runSimple targetName
-            match targetResult.WasSkipped, targetResult.Error with
-            | true, _  ->
-                System.Console.WriteLine("Target skipped")
-                1
-            | false, None -> 0
-            | false, Some(error) ->
-                System.Console.Error.WriteLine error
-                1
+                |> Context.FakeExecutionContext.Create false "build.fsx"
+                |> Context.RuntimeContext.Fake
+                |> Context.setExecutionContext
+            initTargets ()
+            Target.runOrDefaultWithArguments targetName
+            0
+
     with e ->
         printfn "%s" e.Message
         1

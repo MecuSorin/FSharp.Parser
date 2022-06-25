@@ -4,6 +4,9 @@ module Result =
     let toOption = function
         | Ok v -> Some v
         | Error _ -> None
+    let get = function
+        | Ok v -> v
+        | Error e -> failwithf "get: %A" e
 
 module Path =
     open System.IO

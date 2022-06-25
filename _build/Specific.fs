@@ -25,7 +25,7 @@ module Specific =
     let configuration = "Release"
     let solutionFile = "FSharp.Parser.sln"
     let libraryFile = "src/FSharp.Parser/FSharp.Parser.fsproj"
-    let testProjects = [ "tests/FSharp.Parser.Tests" ]
+    let testProjects = [ "tests" </> "FSharp.Parser.Tests" ]
     let release = ReleaseNotes.load "RELEASE_NOTES.md"
     let distDir = rootDir </> "nuget_dist"
     let githubToken = Environment.environVarOrNone "GITHUB_TOKEN"
@@ -118,7 +118,7 @@ module Specific =
 
         let testAssemblies () = [
             for proj in testProjects do
-                let projName = proj.Split(System.IO.Path.DirectorySeparatorChar) |> Array.last
+                let projName = proj.Split(Path.DirectorySeparatorChar) |> Array.last
                 let pattern = proj </> "bin" </> configuration </> "**" </> (projName + ".dll")
 
                 yield! (!!pattern)
@@ -143,11 +143,10 @@ module Specific =
                 |> Fake.Testing.Common.FailedTestsException |> raise
             __.MarkSuccess()
 
+    open Fake.Core
+    open Fake.Core.TargetOperators
 
-    module Targets =
-
-        open Fake.Core
-        open Fake.Core.TargetOperators
+    let initTargets () =
 
         Target.initEnvironment ()
 
@@ -157,6 +156,10 @@ module Specific =
             ++ "tests/**/bin"
             ++ "src/**/obj"
             ++ "tests/**/obj"
+            |> Seq.filter (fun f -> f.StartsWith(rootDir </> "_build") |> not)
+            |> Seq.map (fun f ->
+                printfn "Deleting %s" f
+                f)
             |> Shell.cleanDirs
 
             Shell.rm "paket-files/paket.restore.cached"
