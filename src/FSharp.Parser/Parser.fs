@@ -202,8 +202,7 @@ module Parser =
         let startingPos = Math.Max(0, fromPos - padding)
         let takeChars = toPosition + padding - startingPos + 1
 
-        let actualCharsAvailable =
-            Math.Min(s.Length - startingPos, takeChars)
+        let actualCharsAvailable = Math.Min(s.Length - startingPos, takeChars)
 
         s.Substring(startingPos, actualCharsAvailable), String(' ', fromPos - startingPos) + "^"
 
@@ -244,6 +243,7 @@ module Parser =
             | _, Error _ -> pos, Ok None
             | newPos, Ok tVal -> newPos, Ok(Some tVal)
         |> Parser
+
     /// Is checking ahead if the parser succeeds without advancing on success
     let peek (Parser p) =
         fun str pos ->
@@ -251,6 +251,7 @@ module Parser =
             | newPos, Error e -> newPos, Error e
             | newPos, Ok tVal -> pos, Ok tVal
         |> Parser
+
     /// succeeds on the EOF
     let pendOfInput =
         fun (str: string) (StrIndex pos) ->
@@ -302,6 +303,7 @@ module Parser =
         |> Parser
 
     let pcombine (pu: 'U Parser) (pt: 'T Parser) : 'U Parser = pt |> pbind (fun _ -> pu)
+
     /// Think about it as a parsers generator: Given a list of items, from them we build parsers and apply those parsers in succession
     let ptraverse (f: 'A -> 'B Parser) (s: 'A list) : Parser<'B list> =
         fun source position ->
@@ -348,6 +350,7 @@ module Parser =
     let (|>>>) p f = pmapResult f p
     let (>>%) (p: _ Parser) v : _ Parser = pbind (fun _ -> preturn v) p
     let (<|>) a b = palternative a b //<?> "altenative"
+
     /// Ignores the result from the first parser
     let (>>.) pu pt =
         parser {
@@ -355,6 +358,7 @@ module Parser =
             let! t = pt
             return t
         }
+
     /// Ignores the result from the second parser
     let (.>>) (pu: 'U Parser) (pt: 'T Parser) : 'U Parser =
         parser {
@@ -362,6 +366,7 @@ module Parser =
             let! _ = pt
             return u
         }
+
     /// Applies both parsers and tuples the results
     let (.>>.) (pu: 'U Parser) (pt: 'T Parser) : Parser<'U * 'T> =
         parser {
@@ -432,6 +437,7 @@ module Parser =
             let! _endValue = pend
             return many1
         }
+
     /// Will take p until a pend can succeed, whitout consuming pend
     let pfewerTill (Parser p: 'T Parser) (Parser pend: 'E Parser) : Parser<'T list> =
         fun source position ->
@@ -527,23 +533,18 @@ module Parser =
             | newIndex, Ok (Some v) -> newIndex, Ok v
         |> Parser
 
-    let pdigit =
-        psatisfy Char.IsDigit "Looking for a digit" panyChar
+    let pdigit = psatisfy Char.IsDigit "Looking for a digit" panyChar
 
-    let pletter =
-        psatisfy Char.IsLetter "Looking for a letter" panyChar
+    let pletter = psatisfy Char.IsLetter "Looking for a letter" panyChar
 
-    let plower =
-        psatisfy Char.IsLower "Looking for a lower letter" panyChar
+    let plower = psatisfy Char.IsLower "Looking for a lower letter" panyChar
 
-    let pupper =
-        psatisfy Char.IsUpper "Looking for an upper letter" panyChar
+    let pupper = psatisfy Char.IsUpper "Looking for an upper letter" panyChar
 
     let pletterOrDigit =
         psatisfy Char.IsLetterOrDigit "Looking for a letter or digit" panyChar
 
-    let pspace =
-        psatisfy Char.IsWhiteSpace "Looking for a space character" panyChar
+    let pspace = psatisfy Char.IsWhiteSpace "Looking for a space character" panyChar
 
     let pspaces = pmany pspace
 
@@ -609,8 +610,7 @@ module Parser =
     let pnewLineWin = pstring "\r\n"
     let pnewLine = pnewLineWin <|> pnewLineLinux
 
-    let pendOfRow =
-        pnewLine |>> ignore <|> pendOfInput <?> "Row End"
+    let pendOfRow = pnewLine |>> ignore <|> pendOfInput <?> "Row End"
 
     let pstringTill p = pfewerTill panyChar p |>> String.build
 
@@ -649,6 +649,7 @@ module Parser =
         >>= function
             | true, v -> preturn v
             | _ -> pfail "The number was out of range of Byte"
+
     /// System.Int32
     let pint =
         parser {
@@ -703,10 +704,9 @@ module Parser =
 
         let r = ref dummy
 
-        Parser
-            (fun s i ->
-                match r.Value with
-                | Parser p -> p s i),
+        Parser (fun s i ->
+            match r.Value with
+            | Parser p -> p s i),
         fun p -> r.Value <- p
 
     let pEatWhileNotParserThenParser (Parser pEnd: 'T Parser) : 'T Parser =
