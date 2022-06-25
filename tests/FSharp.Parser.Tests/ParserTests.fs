@@ -201,6 +201,17 @@ let getSampleTests =
         testSample 1 5 ("01234567", " ^")
     }
 
+let guidTest =
+    test "Guid" {
+        let guid = System.Guid.NewGuid().ToString()
+
+        let actual =
+            parse Guid.parser guid
+            |> Result.map (String.concat "--")
+
+        Expect.equal (Ok guid) actual "Should be equal"
+    }
+
 let parsersTests =
     testList
         "Parsers"
@@ -215,4 +226,5 @@ let parsersTests =
           manyTests
           recursiveParsersTests
           lookAheadTests
+          guidTest
           endOfInputTests ]

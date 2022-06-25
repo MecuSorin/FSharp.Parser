@@ -558,6 +558,15 @@ module Parser =
             (sprintf "Looking for case insensitive %c" c)
             panyChar
 
+    let phex =
+        pdigit
+        <|> pcharCI 'a'
+        <|> pcharCI 'b'
+        <|> pcharCI 'c'
+        <|> pcharCI 'd'
+        <|> pcharCI 'e'
+        <|> pcharCI 'f'
+
     let pstring (s: string) : string Parser =
         fun (str: string) (StrIndex pos) ->
             if isNull s then
@@ -718,6 +727,8 @@ module Parser =
         |> Parser
 
     let (>@>) (pc: 't Parser) (pl: 't list Parser) : 't list Parser = pc .>>. pl |>> fun (c, l) -> l @ [ c ]
+    /// Pay attention to the order of parsers. In the "1a" case use preturn [] <@< pchar 'a' <@< pdigit
+    let (<@<) (pl: 't list Parser) (pc: 't Parser) : 't list Parser = pc .>>. pl |>> fun (c, l) -> c :: l
 
     let extractIp s =
         parse (pfewerTill panyChar (pchar ':') |>> String.build) s
@@ -727,3 +738,19 @@ module Parser =
         sprintf "%A " value
         |> parse (pfewerTill panyChar (pchar ' ') |>> String.build)
         |> Result.defaultValue defaultValue
+
+    module Guid =
+        let internal parse4times tailParser p = tailParser <@< p <@< p <@< p <@< p
+        let internal hex4 = parse4times (preturn []) phex
+        let internal hex8 = parse4times hex4 phex
+        let internal hex12 = parse4times hex8 phex
+        let internal separator = pchar '-'
+
+        let parser =
+            preturn []
+            <@< hex12
+            <@< (hex4 .>> separator)
+            <@< (hex4 .>> separator)
+            <@< (hex4 .>> separator)
+            <@< (hex8 .>> separator)
+            |>> List.map String.build
