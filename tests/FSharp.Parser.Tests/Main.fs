@@ -7,7 +7,7 @@ open FSharp.Tests.Parser
 let main argv =
     runTestsWithArgs
         { defaultConfig with
-              verbosity = Expecto.Logging.LogLevel.Info
-              printer = Expecto.Impl.TestPrinters.summaryPrinter defaultConfig.printer }
+            verbosity = Expecto.Logging.LogLevel.Info
+            printer = Expecto.Impl.TestPrinters.summaryPrinter defaultConfig.printer }
         [||]
         parsersTests

@@ -40,18 +40,16 @@ let charTests =
     }
 
 let floatTests =
-    testCase
-        "pfloat"
-        (fun _ ->
-            let testAgainst = testHelper None pfloat
-            testAgainst 0. "0"
-            testAgainst 0. "+0"
-            testAgainst 0. "-0"
-            testAgainst 3. "+3"
-            testAgainst 3. "3,"
-            testAgainst -100.0 "-100"
-            testAgainst -0.12 "-.12"
-            testAgainst 123.456 "123.456")
+    testCase "pfloat" (fun _ ->
+        let testAgainst = testHelper None pfloat
+        testAgainst 0. "0"
+        testAgainst 0. "+0"
+        testAgainst 0. "-0"
+        testAgainst 3. "+3"
+        testAgainst 3. "3,"
+        testAgainst -100.0 "-100"
+        testAgainst -0.12 "-.12"
+        testAgainst 123.456 "123.456")
 
 let spaceTests =
     test "pspace" {
@@ -173,8 +171,7 @@ let recursiveParsersTests =
 
 let lookAheadTests =
     test "pfewerTill" {
-        let skipper =
-            pfewerTill (pchar '+' <|> pchar '-' <|> pdigit) (pstring "+++")
+        let skipper = pfewerTill (pchar '+' <|> pchar '-' <|> pdigit) (pstring "+++")
         // testHelper None (skipper >>. pskipWhileNot pdigit >>. pint) 5 "+1-2++3+-++4++++5+++6"
         testParserFailHelper (skipper >>. panyChar) ("+1-2++3+".Length) "+1-2++3+"
     }
@@ -207,7 +204,7 @@ let guidTest =
 
         let actual =
             parse Guid.parser guid
-            |> Result.map (String.concat "--")
+            |> Result.map (String.concat "-")
 
         Expect.equal (Ok guid) actual "Should be equal"
     }
