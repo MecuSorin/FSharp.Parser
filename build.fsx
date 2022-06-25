@@ -17,17 +17,7 @@ open System.IO
 let project = "FSharp.Parser"
 let summary = "FSharp.Parser provides simple parsing tooling"
 let configuration = "Release"
-let solutionFile = "src/FSharp.Parser/FSharp.Parser.fsproj"
 
-let srcCodeGlob =
-    !! (__SOURCE_DIRECTORY__  </> "src/**/*.fs")
-    ++ (__SOURCE_DIRECTORY__  </> "src/**/*.fsx")
-    -- (__SOURCE_DIRECTORY__  </> "src/**/obj/**/*.fs")
-
-let testsCodeGlob =
-    !! (__SOURCE_DIRECTORY__  </> "tests/**/*.fs")
-    ++ (__SOURCE_DIRECTORY__  </> "tests/**/*.fsx")
-    -- (__SOURCE_DIRECTORY__  </> "tests/**/obj/**/*.fs")
 
 let gitOwner ="mecumihaisorin"
 
@@ -125,32 +115,27 @@ Target.create "Restore" (fun _ ->
   DotNet.restore id solutionFile
 )
 
-let runTestAssembly setParams testAssembly =
-  let exitCode =
-    let fakeStartInfo testAssembly (args : Expecto.Params) =
-      let workingDir =
-        if String.isNotNullOrEmpty args.WorkingDirectory
-        then args.WorkingDirectory else Fake.IO.Path.getDirectory testAssembly
-      (fun (info: ProcStartInfo) ->
-        { info with
-            FileName = "dotnet"
-            Arguments = sprintf "%s %s" testAssembly (string args)
-            WorkingDirectory = workingDir } )
+let runTestAssembly testAssembly =
+    printfn "Should execute %s" testAssembly
+    let exitCode =
+        let parameters = Expecto.Params.DefaultParams
+        let workingDir =
+            if String.isNotNullOrEmpty parameters.WorkingDirectory
+            then parameters.WorkingDirectory else Fake.IO.Path.getDirectory testAssembly
+        Command.RawCommand("dotnet", Arguments.OfArgs [testAssembly; parameters |> string ])
+        |> CreateProcess.fromCommand
+        |> CreateProcess.withWorkingDirectory workingDir
+        |> Proc.run
+        |> fun pr -> pr.ExitCode
 
-    let execWithExitCode testAssembly argsString timeout =
-      Process.execSimple (fakeStartInfo testAssembly argsString) timeout
-
-    execWithExitCode testAssembly (setParams Expecto.Params.DefaultParams) TimeSpan.MaxValue
-
-  testAssembly, exitCode
-
-let runTests setParams testAssemblies =
+    testAssembly, exitCode
+let runTests testAssemblies =
   let details = testAssemblies |> String.separated ", "
   use __ = Trace.traceTask "Expecto" details
   let res =
     testAssemblies
-    |> Seq.map (runTestAssembly setParams)
-    |> Seq.filter( snd >> (<>) 0)
+    |> Seq.map runTestAssembly
+    |> Seq.filter( fun (_assmbly, exitCode) -> exitCode <> 0)
     |> Seq.toList
 
   match res with
@@ -169,14 +154,14 @@ let testProjects = [
 
 let testAssemblies = [
   for proj in testProjects do
-    let projName = proj.Split('/') |> Array.last
+    let projName = proj.Split(System.IO.Path.DirectorySeparatorChar) |> Array.last
     let pattern = proj </> "bin" </> configuration </> "**" </> (projName + ".dll")
 
     yield! (!!pattern)
 ]
 
 Target.create "RunTests" (fun _ ->
-  runTests id testAssemblies
+  runTests testAssemblies
 )
 
 let release = ReleaseNotes.load "RELEASE_NOTES.md"
@@ -206,7 +191,7 @@ Target.create "AssemblyInfo" (fun _ ->
 
 let releaseNotes = String.toLines release.Notes
 Target.create "NuGet" (fun _ ->
-    [solutionFile]
+    [libraryFile]
     |> Seq.iter (
         DotNet.pack(fun p ->
            { p with

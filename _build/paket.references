@@ -1,0 +1,10 @@
+group Build
+Argu
+Fake.Core.Target
+Fake.DotNet.AssemblyInfoFile
+Fake.DotNet.Testing.Expecto
+Fake.Core.ReleaseNotes
+Fake.Core.Trace
+Fake.DotNet.Cli
+Fake.DotNet.Paket
+Fake.Core.Context
